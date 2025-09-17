@@ -54,12 +54,11 @@ return [
         ],
 
         'postmark' => [
-            'transport' => 'postmark',
-            // 'message_stream_id' => env('POSTMARK_MESSAGE_STREAM_ID'),
-            // 'client' => [
-            //     'timeout' => 5,
-            // ],
-        ],
+    'transport' => 'postmark',
+    'token' => env('POSTMARK_TOKEN'),
+    // 'message_stream_id' => env('POSTMARK_MESSAGE_STREAM_ID'),
+],
+
 
         'resend' => [
             'transport' => 'resend',
