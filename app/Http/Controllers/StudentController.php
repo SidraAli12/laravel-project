@@ -1,12 +1,14 @@
 <?php
 
-namespace App\Http\Controllers;
+
 
 namespace App\Http\Controllers;
 
 use App\Models\Student;
 use App\Models\ClassModel;
 use Illuminate\Http\Request;
+use Illuminate\Support\Str;
+use Illuminate\Support\Facades\Mail;
 
 class StudentController extends Controller
 {
@@ -33,9 +35,37 @@ class StudentController extends Controller
             'class_id' => 'required|exists:classes,id',
         ]);
 
-        Student::create($data);
+        // default values for verification
+        $data['is_verified'] = 0;
+        $data['verification_token'] = Str::random(40);
 
-        return redirect()->route('students.index')->with('success', 'Student added successfully!');
+        $student = Student::create($data);
+
+        // send verification email
+        $verificationLink = route('students.verify', $student->verification_token);
+
+        Mail::raw("Hi {$student->name}, click this link to verify your account: $verificationLink", function ($message) use ($student) {
+            $message->to($student->email)
+                    ->subject('Verify your Student Account');
+        });
+
+        return redirect()->route('students.index')->with('success', 'Student added successfully! Verification email sent.');
+    }
+
+    // Verify student email
+    public function verify($token)
+    {
+        $student = Student::where('verification_token', $token)->first();
+
+        if (!$student) {
+            return redirect()->route('students.index')->with('error', 'Invalid verification link.');
+        }
+
+        $student->is_verified = 1;
+        $student->verification_token = null;
+        $student->save();
+
+        return redirect()->route('students.index')->with('success', 'Student verified successfully!');
     }
 
     // Show edit form
@@ -64,4 +94,5 @@ class StudentController extends Controller
     {
         $student->delete();
         return redirect()->route('students.index')->with('success', 'Student deleted successfully!');
-    }}
+    }
+}

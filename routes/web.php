@@ -38,7 +38,8 @@ require __DIR__.'/auth.php';
 Route::middleware(['auth'])->group(function () {
     Route::resource('students', StudentController::class);
 });
-
+// Email verification route (public)
+Route::get('/students/verify/{token}', [StudentController::class, 'verify'])->name('students.verify');
 
 //classes task 
 Route::resource('classes', ClassController::class)->middleware('auth');
@@ -48,7 +49,7 @@ Route::resource('classes', ClassController::class)->middleware('auth');
 
 //Route::get('/send-mail', [MailController::class, 'sendMail']);
 Route::get('/send-mail', function () {
-    \Illuminate\Support\Facades\Mail::to('bushra@codekernal.com')
+    \Illuminate\Support\Facades\Mail::to('sidra@codekernal.com')
         ->send(new \App\Mail\WelcomeMail());
     return "Mail sent!";
 });
