@@ -1,34 +1,40 @@
 <x-app-layout>
-    <h2>Students List</h2>
+    <x-slot name="header">
+        <h2 class="font-semibold text-xl text-gray-800 leading-tight">
+            Students List
+        </h2>
+    </x-slot>
 
-    @if(session('success'))
-        <div style="color: green;">{{ session('success') }}</div>
-    @endif
+    <div class="py-6">
+        <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
+            <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg p-6">
+                
+                <ul id="studentList"></ul>
 
-    <table border="1" cellpadding="10" cellspacing="0">
-        <tr>
-            <th>ID</th>
-            <th>Name</th>
-            <th>Email</th>
-            <th>Class</th>
-            <th>Actions</th>
-        </tr>
+            </div>
+        </div>
+    </div>
 
-        @foreach($students as $student)
-            <tr>
-                <td>{{ $student->id }}</td>
-                <td>{{ $student->name }}</td>
-                <td>{{ $student->email }}</td>
-                <td>{{ $student->class->classname ?? 'N/A' }}</td>
-                <td>
-                    <a href="{{ route('students.edit', $student) }}">Edit</a>
-                    <form action="{{ route('students.destroy', $student) }}" method="POST" style="display:inline;">
-                        @csrf
-                        @method('DELETE')
-                        <button type="submit" onclick="return confirm('Are you sure?')">Delete</button>
-                    </form>
-                </td>
-            </tr>
-        @endforeach
-    </table>
+    {{-- ✅ JavaScript for AJAX --}}
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script>
+        function loadStudents() {
+            $.ajax({
+                url: "{{ route('students.fetch') }}",
+                type: "GET",
+                dataType: "json",
+                success: function(students) {
+                    let list = "";
+                    students.forEach(function(student) {
+                        list += `<li>${student.name} (${student.email})</li>`;
+                    });
+                    $("#studentList").html(list);
+                },
+                error: function() {
+                    alert("Failed to load students.");
+                }
+            });
+        }
+        $(document).ready(loadStudents);
+    </script>
 </x-app-layout>

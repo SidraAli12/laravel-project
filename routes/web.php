@@ -36,7 +36,9 @@ require __DIR__.'/auth.php';
 
 // Students CRUD routes (only when logged in)
 Route::middleware(['auth'])->group(function () {
-    Route::resource('students', StudentController::class);
+    Route::resource('students', StudentController::class)->except(['show']);
+     // 👇 new AJAX fetch route
+Route::get('/students/fetch', [StudentController::class, 'fetchStudents'])->name('students.fetch');
 });
 // Email verification route (public)
 Route::get('/students/verify/{token}', [StudentController::class, 'verify'])->name('students.verify');
@@ -53,3 +55,7 @@ Route::get('/send-mail', function () {
         ->send(new \App\Mail\WelcomeMail());
     return "Mail sent!";
 });
+// // AJAX route for fetching students table
+// Route::get('/students/fetch', [StudentController::class, 'fetchStudents'])
+//     ->name('students.fetch')
+//     ->middleware('auth');

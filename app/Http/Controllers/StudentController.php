@@ -1,7 +1,4 @@
 <?php
-
-
-
 namespace App\Http\Controllers;
 
 use App\Models\Student;
@@ -9,6 +6,10 @@ use App\Models\ClassModel;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Mail;
+
+
+
+
 
 class StudentController extends Controller
 {
@@ -18,7 +19,12 @@ class StudentController extends Controller
         $students = Student::with('class')->get();
         return view('students.index', compact('students'));
     }
-
+// AJAX method here
+    public function fetchStudents()
+    {
+        $students = Student::with('class')->get();
+    return response()->json($students); 
+    }
     // Show create form
     public function create()
     {
@@ -26,30 +32,43 @@ class StudentController extends Controller
         return view('students.create', compact('classes'));
     }
 
-    // Store new student
+    // Store new student (AJAX version)
     public function store(Request $request)
     {
-        $data = $request->validate([
-            'name'     => 'required|string|max:255',
-            'email'    => 'required|email|unique:students,email',
-            'class_id' => 'required|exists:classes,id',
-        ]);
+        try {
+            $data = $request->validate([
+                'name'     => 'required|string|max:255',
+                'email'    => 'required|email|unique:students,email',
+                'class_id' => 'required|exists:classes,id',
+            ]);
 
-        // default values for verification
-        $data['is_verified'] = 0;
-        $data['verification_token'] = Str::random(40);
+            // default values for verification
+            $data['is_verified'] = 0;
+            $data['verification_token'] = Str::random(40);
 
-        $student = Student::create($data);
+            $student = Student::create($data);
 
-        // send verification email
-        $verificationLink = route('students.verify', $student->verification_token);
+            // send verification email
+            $verificationLink = route('students.verify', $student->verification_token);
 
-        Mail::raw("Hi {$student->name}, click this link to verify your account: $verificationLink", function ($message) use ($student) {
-            $message->to($student->email)
-                    ->subject('Verify your Student Account');
-        });
+            Mail::raw("Hi {$student->name}, click this link to verify your account: $verificationLink", function ($message) use ($student) {
+                $message->to($student->email)
+                        ->subject('Verify your Student Account');
+            });
 
-        return redirect()->route('students.index')->with('success', 'Student added successfully! Verification email sent.');
+            // return JSON for AJAX
+            return response()->json([
+                'success' => true,
+                'message' => 'Student added successfully! Verification email sent.',
+                'student' => $student
+            ], 201);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Something went wrong: ' . $e->getMessage()
+            ], 500);
+        }
     }
 
     // Verify student email
@@ -86,13 +105,20 @@ class StudentController extends Controller
 
         $student->update($data);
 
-        return redirect()->route('students.index')->with('success', 'Student updated successfully!');
+        return response()->json([
+            'success' => true,
+            'message' => 'Student updated successfully!',
+            'student' => $student
+        ]);
     }
 
     // Delete student
     public function destroy(Student $student)
     {
         $student->delete();
-        return redirect()->route('students.index')->with('success', 'Student deleted successfully!');
+        return response()->json([
+            'success' => true,
+            'message' => 'Student deleted successfully!'
+        ]);
     }
 }
